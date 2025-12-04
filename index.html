@@ -309,7 +309,12 @@
     </div>
 
     <div class="status-bar">
-        <div id="locationName" class="location-pill">📍 載入中...</div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <div id="locationName" class="location-pill">📍 載入中...</div>
+            <select id="spotSelect" class="location-pill" style="font-size: 1rem; padding: 5px 10px; cursor: pointer;">
+                <option value="" disabled selected>切換浪點 🏄</option>
+            </select>
+        </div>
         <div id="updateTime" class="update-pill">更新中...</div>
     </div>
 
@@ -320,7 +325,31 @@
     </div>
 
     <script>
-        const DEFAULT_API_URL = "https://weather-task4.zeabur.app/api/weather/kaohsiung";
+        const DEFAULT_API_URL = "https://weather-task4.zeabur.app/api/weather/waiao"; // 預設改為外澳
+
+        // === 衝浪浪點列表 (與後端同步) ===
+        const SURF_SPOTS = [
+            { name: "白沙灣（石門）", id: "baishawan_shimen" },
+            { name: "中角灣（金山）", id: "zhongjiao_bay" },
+            { name: "福隆海水浴場", id: "fulong" },
+            { name: "蜜月灣（大溪）", id: "honeymoon_bay" },
+            { name: "外澳（雙獅）", id: "waiao" },
+            { name: "烏石港", id: "wushi" },
+            { name: "無尾港", id: "wuwei" },
+            { name: "假日之森（竹南）", id: "holiday_forest" },
+            { name: "松柏港沙灘", id: "songbo" },
+            { name: "漁光島", id: "yuguangdao" },
+            { name: "旗津海水浴場", id: "cijin" },
+            { name: "南灣", id: "nanwan" },
+            { name: "墾丁大灣", id: "dawan_kenting" },
+            { name: "墾丁白砂灣", id: "baisha_kenting" },
+            { name: "佳樂水", id: "jialeshui" },
+            { name: "港口（滿州）", id: "gangkou" },
+            { name: "東河", id: "donghe" },
+            { name: "金樽", id: "jinzun" },
+            { name: "都蘭海灘", id: "dulan" },
+            { name: "山水沙灘（澎湖）", id: "shanshui_penghu" }
+        ];
 
         // === 1. 3D 圖示設定 ===
         function getWeatherIcon(weather) {
@@ -455,9 +484,29 @@
             }
         }
 
+        async function fetchWeatherBySpot(spotId) {
+            const url = `https://weather-task4.zeabur.app/api/weather/${spotId}`;
+            try {
+                document.getElementById('loading').style.display = 'flex';
+                const res = await fetch(url);
+                const json = await res.json();
+
+                if (json.success) {
+                    document.getElementById('locationName').innerText = "📍 " + json.city;
+                    renderWeather(json.data);
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('mainContent').style.display = 'block';
+                }
+            } catch (e) {
+                console.error(e);
+                alert("取得浪點天氣失敗");
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
         async function fetchDefaultWeather() {
             try {
-                document.getElementById('locationName').innerText = "📍 高雄";
+                document.getElementById('locationName').innerText = "📍 外澳";
                 const res = await fetch(DEFAULT_API_URL);
                 const json = await res.json();
 
@@ -472,7 +521,25 @@
             }
         }
 
+        function initDropdown() {
+            const select = document.getElementById('spotSelect');
+            SURF_SPOTS.forEach(spot => {
+                const option = document.createElement('option');
+                option.value = spot.id;
+                option.textContent = spot.name;
+                select.appendChild(option);
+            });
+
+            select.addEventListener('change', (e) => {
+                if (e.target.value) {
+                    fetchWeatherBySpot(e.target.value);
+                }
+            });
+        }
+
         function initApp() {
+            initDropdown();
+
             if (!navigator.geolocation) {
                 fetchDefaultWeather();
                 return;
