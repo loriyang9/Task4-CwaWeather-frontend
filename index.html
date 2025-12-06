@@ -389,26 +389,26 @@
 
         // === 衝浪浪點列表 (與後端同步) ===
         const SURF_SPOTS = [
-            { name: "白沙灣（石門）", id: "baishawan_shimen" },
-            { name: "中角灣（金山）", id: "zhongjiao_bay" },
-            { name: "福隆海水浴場", id: "fulong" },
-            { name: "蜜月灣（大溪）", id: "honeymoon_bay" },
-            { name: "外澳（雙獅）", id: "waiao" },
-            { name: "烏石港", id: "wushi" },
-            { name: "無尾港", id: "wuwei" },
-            { name: "假日之森（竹南）", id: "holiday_forest" },
-            { name: "松柏港沙灘", id: "songbo" },
-            { name: "漁光島", id: "yuguangdao" },
-            { name: "旗津海水浴場", id: "cijin" },
-            { name: "南灣", id: "nanwan" },
-            { name: "墾丁大灣", id: "dawan_kenting" },
-            { name: "墾丁白砂灣", id: "baisha_kenting" },
-            { name: "佳樂水", id: "jialeshui" },
-            { name: "港口（滿州）", id: "gangkou" },
-            { name: "東河", id: "donghe" },
-            { name: "金樽", id: "jinzun" },
-            { name: "都蘭海灘", id: "dulan" },
-            { name: "山水沙灘（澎湖）", id: "shanshui_penghu" }
+            { name: "白沙灣（石門）", id: "baishawan_shimen", city: "新北" },
+            { name: "中角灣（金山）", id: "zhongjiao_bay", city: "新北" },
+            { name: "福隆海水浴場", id: "fulong", city: "新北" },
+            { name: "蜜月灣（大溪）", id: "honeymoon_bay", city: "宜蘭" },
+            { name: "外澳（雙獅）", id: "waiao", city: "宜蘭" },
+            { name: "烏石港", id: "wushi", city: "宜蘭" },
+            { name: "無尾港", id: "wuwei", city: "宜蘭" },
+            { name: "假日之森（竹南）", id: "holiday_forest", city: "苗栗" },
+            { name: "松柏港沙灘", id: "songbo", city: "台中" },
+            { name: "漁光島", id: "yuguangdao", city: "台南" },
+            { name: "旗津海水浴場", id: "cijin", city: "高雄" },
+            { name: "南灣", id: "nanwan", city: "屏東" },
+            { name: "墾丁大灣", id: "dawan_kenting", city: "屏東" },
+            { name: "墾丁白砂灣", id: "baisha_kenting", city: "屏東" },
+            { name: "佳樂水", id: "jialeshui", city: "屏東" },
+            { name: "港口（滿州）", id: "gangkou", city: "屏東" },
+            { name: "東河", id: "donghe", city: "台東" },
+            { name: "金樽", id: "jinzun", city: "台東" },
+            { name: "都蘭海灘", id: "dulan", city: "台東" },
+            { name: "山水沙灘（澎湖）", id: "shanshui_penghu", city: "澎湖" }
         ];
 
         // === 1. 3D 圖示設定 ===
@@ -607,17 +607,22 @@
             const url = `http://localhost:3000/api/weather/nearby?lat=${lat}&lon=${lon}`;
 
             try {
+                document.getElementById('loading').style.display = 'flex';
                 const res = await fetch(url);
                 const json = await res.json();
 
                 if (json.success) {
-                    document.getElementById('locationName').innerText = "📍 " + json.city;
-                    renderWeather(json.data);
+                    // GPS 定位後，從返回的浪點 ID 查找縣市
+                    const spotName = json.city; // API 返回的浪點名稱
+                    // 嘗試從 SURF_SPOTS 找對應的縣市
+                    const matchedSpot = SURF_SPOTS.find(s => s.name === spotName);
 
+                    document.getElementById('locationName').innerText = "📍 " + (matchedSpot?.city || spotName);
+                    renderWeather(json.data);
                     document.getElementById('loading').style.display = 'none';
                     document.getElementById('mainContent').style.display = 'block';
                 } else {
-                    throw new Error("API fail");
+                    fetchDefaultWeather();
                 }
             } catch (e) {
                 console.error(e);
@@ -628,12 +633,16 @@
         async function fetchWeatherBySpot(spotId) {
             const url = `http://localhost:3000/api/weather/${spotId}`;
             try {
+                // 從 SURF_SPOTS 找到對應的浪點
+                const spot = SURF_SPOTS.find(s => s.id === spotId);
+
                 document.getElementById('loading').style.display = 'flex';
                 const res = await fetch(url);
                 const json = await res.json();
 
                 if (json.success) {
-                    document.getElementById('locationName').innerText = "📍 " + json.city;
+                    // 顯示縣市，從 SURF_SPOTS 陣列取得
+                    document.getElementById('locationName').innerText = "📍 " + (spot?.city || json.city);
                     renderWeather(json.data);
                     document.getElementById('loading').style.display = 'none';
                     document.getElementById('mainContent').style.display = 'block';
@@ -647,7 +656,10 @@
 
         async function fetchDefaultWeather() {
             try {
-                document.getElementById('locationName').innerText = "📍 外澳";
+                // 預設是外澳，從 SURF_SPOTS 找到對應的縣市
+                const defaultSpot = SURF_SPOTS.find(s => s.id === 'waiao');
+                document.getElementById('locationName').innerText = "📍 " + (defaultSpot?.city || "宜蘭");
+
                 const res = await fetch(DEFAULT_API_URL);
                 const json = await res.json();
 
