@@ -296,6 +296,26 @@
             z-index: 999;
             border: 10px solid var(--neo-black);
         }
+
+        .stat-box {
+            background: var(--neo-white);
+            border: 2px solid var(--neo-black);
+            padding: 5px;
+            text-align: center;
+            box-shadow: 2px 2px 0 var(--neo-black);
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: #555;
+        }
+
+        .stat-value {
+            font-size: 1rem;
+            font-weight: 900;
+            color: var(--neo-black);
+        }
     </style>
 </head>
 
@@ -325,7 +345,7 @@
     </div>
 
     <script>
-        const DEFAULT_API_URL = "https://weather-task4.zeabur.app/api/weather/waiao"; // 預設改為外澳
+        const DEFAULT_API_URL = "http://localhost:3000/api/weather/waiao"; // 預設改為外澳
 
         // === 衝浪浪點列表 (與後端同步) ===
         const SURF_SPOTS = [
@@ -353,37 +373,37 @@
 
         // === 1. 3D 圖示設定 ===
         function getWeatherIcon(weather) {
-            let iconUrl = "https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Sun.png";
-
-            if (!weather) return `<img src="${iconUrl}">`;
-
-            if (weather.includes("晴")) {
-                iconUrl = "https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Sun.png";
-            }
-            else if (weather.includes("雷")) {
-                iconUrl = "https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Cloud%20with%20Lightning%20and%20Rain.png";
-            }
-            else if (weather.includes("雨")) {
-                iconUrl = "https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Cloud%20with%20Rain.png";
-            }
-            else if (weather.includes("多雲") || weather.includes("陰")) {
-                iconUrl = "https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Sun%20Behind%20Cloud.png";
-            }
-
-            return `<img src="${iconUrl}" alt="${weather}">`;
+            if (!weather) return "❓";
+            if (weather.includes("晴")) return "☀️";
+            if (weather.includes("多雲")) return "⛅";
+            if (weather.includes("陰")) return "☁️";
+            if (weather.includes("雨")) return "🌧️";
+            if (weather.includes("雷")) return "⚡";
+            return "❓"; // Default for unknown/missing
         }
 
         // === 2. 芭比穿搭建議 (使用單一溫度) ===
         function getAdvice(rainProb, temp) {
-            let rainIcon = "💖";
-            let rainText = "完美髮型日";
-            if (parseInt(rainProb) > 30) { rainIcon = "💅"; rainText = "帶把粉紅傘"; }
+            let rainIcon = "😎";
+            let rainText = "不用帶傘";
+
+            // Handle "--" or non-numeric
+            const rainVal = parseInt(rainProb);
+            const tempVal = parseInt(temp);
+
+            if (!isNaN(rainVal) && rainVal > 30) { rainIcon = "💅"; rainText = "帶把粉紅傘"; }
 
             let clothIcon = "✨";
             let clothText = "最棒的一天";
 
-            if (parseInt(temp) >= 28) { clothIcon = "🕶️"; clothText = "戴上墨鏡"; }
-            else if (parseInt(temp) <= 20) { clothIcon = "🧥"; clothText = "穿粉紅夾克"; }
+            if (!isNaN(tempVal)) {
+                if (tempVal >= 28) { clothIcon = "🕶️"; clothText = "戴上墨鏡"; }
+                else if (tempVal <= 20) { clothIcon = "🧥"; clothText = "穿粉紅夾克"; }
+            } else {
+                // Default advice if no temp
+                clothIcon = "🤷‍♀️";
+                clothText = "天氣未知";
+            }
 
             return { rainIcon, rainText, clothIcon, clothText };
         }
@@ -400,7 +420,7 @@
         // === 3. 渲染畫面主程式 ===
         function renderWeather(data) {
             const forecasts = data.forecasts;
-            const current = forecasts[0];
+            const current = data.current; // Use the dedicated current object from backend
             const others = forecasts.slice(1);
 
             const advice = getAdvice(current.rain, current.temp);
@@ -416,6 +436,36 @@
                     </div>
                     <div class="hero-desc">${current.weather}</div>
                     
+                    <!-- Marine Stats Grid -->
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 20px; border-top: 4px solid var(--neo-black); padding-top: 20px;">
+                        <!-- Row 1 -->
+                        <div class="stat-box">
+                            <div class="stat-label">🌊 浪高</div>
+                            <div class="stat-value">${current.waveHeight || '--'}</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">🧭 浪向</div>
+                            <div class="stat-value">${current.waveDir || '--'}</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">⏱️ 週期</div>
+                            <div class="stat-value">${current.wavePeriod || '--'}</div>
+                        </div>
+                        <!-- Row 2 -->
+                        <div class="stat-box">
+                    <div class="stat-label">🌊 潮位</div>
+                    <div class="stat-value">${current.tideLevel || '--'}</div>
+                </div>        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">🌬️ 風向</div>
+                            <div class="stat-value">${current.windDir || '--'}</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">💨 風速</div>
+                            <div class="stat-value">${current.windSpeed || '--'}</div>
+                        </div>
+                    </div>
+
                     <div class="advice-grid">
                         <div class="advice-item">
                             <div class="advice-icon">${advice.rainIcon}</div>
@@ -463,7 +513,7 @@
 
         // === 4. GPS & API 功能 ===
         async function fetchWeatherByGPS(lat, lon) {
-            const url = `https://weather-task4.zeabur.app/api/weather/nearby?lat=${lat}&lon=${lon}`;
+            const url = `http://localhost:3000/api/weather/nearby?lat=${lat}&lon=${lon}`;
 
             try {
                 const res = await fetch(url);
@@ -485,7 +535,7 @@
         }
 
         async function fetchWeatherBySpot(spotId) {
-            const url = `https://weather-task4.zeabur.app/api/weather/${spotId}`;
+            const url = `http://localhost:3000/api/weather/${spotId}`;
             try {
                 document.getElementById('loading').style.display = 'flex';
                 const res = await fetch(url);
