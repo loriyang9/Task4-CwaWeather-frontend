@@ -530,12 +530,12 @@
                         </div>
                         <!-- Row 2 -->
                         <div class="stat-box">
-                            <div class="stat-label">� 潮位</div>
-                            <div class="stat-value">${current.tideLevel || '--'}</div>
+                            <div class="stat-label">🌊 滿潮時間</div>
+                            <div class="stat-value">${current.highTideTime || '--'}</div>
                         </div>
                         <div class="stat-box">
-                            <div class="stat-label">� 潮高</div>
-                            <div class="stat-value">${current.tideHeight || '--'}</div>
+                            <div class="stat-label">🌊 乾潮時間</div>
+                            <div class="stat-value">${current.lowTideTime || '--'}</div>
                         </div>
                         <div class="stat-box">
                             <div class="stat-label">🌡️ 海溫</div>
@@ -584,6 +584,9 @@
             waveForecastContainer.innerHTML = '';
 
             const waveForecasts = data.waveForecasts || [];
+            console.log('DEBUG: waveForecasts exists?', !!data.waveForecasts);
+            console.log('DEBUG: waveForecasts length:', waveForecasts.length);
+            console.log('DEBUG: waveForecasts sample:', waveForecasts[0]);
 
             if (waveForecasts.length > 0) {
                 waveForecasts.forEach(wf => {
@@ -717,6 +720,8 @@
                 document.getElementById('loading').style.display = 'flex';
                 const res = await fetch(url);
                 const json = await res.json();
+                console.log('DEBUG API Response:', json);
+                console.log('DEBUG waveForecasts in response:', json.data?.waveForecasts);
 
                 if (json.success) {
                     // 顯示縣市，從 SURF_SPOTS 陣列取得
