@@ -79,7 +79,10 @@
             border-bottom: 4px solid var(--neo-black);
             position: sticky;
             top: 0;
-            z-index: 100;
+            z-index: 1000;
+            /* 提高層級，確保蓋過所有內容 */
+            padding-top: max(15px, env(safe-area-inset-top));
+            /* 適配瀏海屏 */
         }
 
         .location-pill {
